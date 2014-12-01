@@ -36,14 +36,14 @@ module.exports = function lookup(pattern, options) {
     if (match.length === 0) {
       continue;
     }
-    return path.resolve(fp);
+    return fp;
   }
 
   var dir = normalized(process.cwd());
   cwd = normalized(cwd);
 
   if (dir === cwd) {
-    return path.resolve(dir);
+    return dir;
   }
   cwd = path.join(cwd, '..');
   if (cwd === '..') {
