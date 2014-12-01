@@ -13,13 +13,15 @@ var mm = require('multimatch');
  * Expose `lookup`
  */
 
-module.exports = function lookup(patterns, options) {
-  var opts = extend({cwd: process.cwd()}, options);
-  patterns = !Array.isArray(patterns)
-    ? [patterns]
-    : patterns;
+module.exports = function lookup(pattern, options) {
+  if (typeof pattern !== 'string' && !Array.isArray(pattern)) {
+    throw new TypeError('look-up expects a string as the first argument.');
+  }
 
-  var cwd = opts.cwd;
+  pattern = typeof pattern === 'string' ? [pattern] : pattern;
+  options = options || {};
+
+  var cwd = options.cwd || process.cwd();
   var files = fs.readdirSync(cwd);
   var len = files.length;
   var i = 0;
@@ -30,7 +32,9 @@ module.exports = function lookup(patterns, options) {
       break;
     }
 
-    var match = mm(fp, patterns, opts);
+    // console.log(pattern)
+
+    var match = mm(fp, pattern, options);
     if (match.length === 0) {
       continue;
     }
@@ -49,23 +53,9 @@ module.exports = function lookup(patterns, options) {
     return null;
   }
 
-  return lookup(patterns, extend(opts, {cwd: cwd}));
+  options.cwd = cwd;
+  return lookup(pattern, options);
 };
-
-/**
- * Basic extend
- *
- * @api private
- */
-
-function extend(a, b) {
-  for (var key in b) {
-    if (b.hasOwnProperty(key)) {
-      a[key] = b[key];
-    }
-  }
-  return a;
-}
 
 /**
  * Normalize the paths for comparisons
