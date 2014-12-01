@@ -17,6 +17,10 @@ function norm(fp) {
 }
 
 describe('lookup', function () {
+  it('should work when no cwd is given', function () {
+    norm(lookup('package.json')).should.eql('package.json');
+  });
+
   it('should support glob patterns', function () {
     norm(lookup('**/c/package.json', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/package.json');
     norm(lookup('**/one.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/d/one.txt');

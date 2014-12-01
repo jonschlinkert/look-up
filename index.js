@@ -19,7 +19,7 @@ module.exports = function lookup(pattern, options) {
   }
 
   pattern = typeof pattern === 'string' ? [pattern] : pattern;
-  options = options || {};
+  options = options || {matchBase: true};
 
   var cwd = options.cwd || process.cwd();
   var files = fs.readdirSync(cwd);
@@ -39,12 +39,12 @@ module.exports = function lookup(pattern, options) {
     return fp;
   }
 
-  var dir = normalized(process.cwd());
-  cwd = normalized(cwd);
 
-  if (dir === cwd) {
-    return dir;
+  var dir = normalized(process.cwd());
+  if (dir === normalized(cwd)) {
+    return cwd;
   }
+
   cwd = path.join(cwd, '..');
   if (cwd === '..') {
     return null;
