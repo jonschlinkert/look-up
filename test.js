@@ -24,9 +24,9 @@ describe('lookup', function () {
   });
 
   it('should support arrays of glob patterns', function () {
-    norm(lookup('**/c/package.json', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/package.json');
-    norm(lookup('**/one.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/d/one.txt');
-    norm(lookup('**/two.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/two.txt');
+    norm(lookup(['**/c/package.json'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/package.json');
+    norm(lookup(['**/one.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/d/one.txt');
+    norm(lookup(['**/two.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/two.txt');
   });
 
   it('should support minimatch `matchBase` option:', function () {

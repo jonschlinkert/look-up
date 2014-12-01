@@ -32,8 +32,6 @@ module.exports = function lookup(pattern, options) {
       break;
     }
 
-    // console.log(pattern)
-
     var match = mm(fp, pattern, options);
     if (match.length === 0) {
       continue;
@@ -47,7 +45,6 @@ module.exports = function lookup(pattern, options) {
   if (dir === cwd) {
     return path.resolve(dir);
   }
-
   cwd = path.join(cwd, '..');
   if (cwd === '..') {
     return null;
