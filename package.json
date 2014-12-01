@@ -1,7 +1,7 @@
 {
   "name": "look-up",
   "description": "Like findup-sync and supports the same features but 20x-40x faster on avg.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "homepage": "https://github.com/jonschlinkert/look-up",
   "author": {
     "name": "Jon Schlinkert",
@@ -28,7 +28,7 @@
     "test": "mocha -R spec"
   },
   "dependencies": {
-    "minimatch": "^1.0.0",
+    "multimatch": "^1.0.1",
     "normalize-path": "^0.3.0"
   },
   "devDependencies": {
