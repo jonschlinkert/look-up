@@ -1,1 +1,1 @@
-module.exports = ['**/a/one.txt', 'fixtures/a/b/c/d'];
+module.exports = ['**/a/one.txt', {cwd: 'fixtures/a/b/c/d'}];

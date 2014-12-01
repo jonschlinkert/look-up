@@ -6,6 +6,6 @@
 
 var findup = require('findup-sync');
 
-module.exports = function (patterns, cwd) {
-  return findup(patterns, {cwd: cwd});
+module.exports = function (patterns, options) {
+  return findup(patterns, options);
 };
