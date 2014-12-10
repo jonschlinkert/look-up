@@ -1,7 +1,7 @@
 {
   "name": "look-up",
   "description": "Like findup-sync and supports the same features but 20x-40x faster on avg.",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "homepage": "https://github.com/jonschlinkert/look-up",
   "author": {
     "name": "Jon Schlinkert",
