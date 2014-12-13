@@ -1,7 +1,7 @@
 {
   "name": "look-up",
   "description": "Like findup-sync and supports the same features but 20x-40x faster on avg.",
-  "version": "0.2.3",
+  "version": "0.3.1",
   "homepage": "https://github.com/jonschlinkert/look-up",
   "author": {
     "name": "Jon Schlinkert",
@@ -14,12 +14,10 @@
   "bugs": {
     "url": "https://github.com/jonschlinkert/look-up/issues"
   },
-  "licenses": [
-    {
-      "type": "MIT",
-      "url": "https://github.com/jonschlinkert/look-up/blob/master/LICENSE-MIT"
-    }
-  ],
+  "license": {
+    "type": "MIT",
+    "url": "https://github.com/jonschlinkert/look-up/blob/master/LICENSE-MIT"
+  },
   "main": "index.js",
   "engines": {
     "node": ">=0.10.0"
