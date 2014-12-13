@@ -17,6 +17,12 @@ function norm(fp) {
 }
 
 describe('lookup', function () {
+  it('should throw when the first arg is not a string or array:', function () {
+    (function() {
+      lookup();
+    }).should.throw('look-up expects a string or array as the first argument.')
+  });
+
   it('should work when no cwd is given', function () {
     norm(lookup('package.json')).should.eql('package.json');
   });
