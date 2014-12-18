@@ -29,8 +29,8 @@ describe('lookup', function () {
   });
 
   it('should support normal (non-glob) file paths:', function () {
-    var isGlob = norm(lookup('package.json', {cwd: path.dirname(resolve.sync('normalize-path'))}))
-    isGlob.should.equal('node_modules/normalize-path/package.json');
+    var normPath = norm(lookup('package.json', {cwd: path.dirname(resolve.sync('normalize-path'))}))
+    normPath.should.equal('node_modules/normalize-path/package.json');
     var isGlob = norm(lookup('package.json', {cwd: path.dirname(resolve.sync('is-glob'))}))
     isGlob.should.equal('node_modules/is-glob/package.json');
   });
@@ -53,6 +53,9 @@ describe('lookup', function () {
     norm(lookup('one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
     norm(lookup('two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
     norm(lookup('?.md', opts)).should.equal('fixtures/a/b/a.md');
+
+    var isGlob = norm(lookup('*.json', {cwd: path.dirname(resolve.sync('is-glob')), matchBase: true}));
+    isGlob.should.equal('node_modules/is-glob/package.json');
   });
 
   it('should return `null` when no files are found:', function () {
