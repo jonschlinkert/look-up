@@ -10,6 +10,7 @@
 var path = require('path');
 var should = require('should');
 var normalize = require('normalize-path');
+var resolve = require('resolve');
 var lookup = require('./');
 
 function norm(fp) {
@@ -24,27 +25,34 @@ describe('lookup', function () {
   });
 
   it('should work when no cwd is given', function () {
-    norm(lookup('package.json')).should.eql('package.json');
+    norm(lookup('package.json')).should.equal('package.json');
+  });
+
+  it('should support normal (non-glob) file paths:', function () {
+    var isGlob = norm(lookup('package.json', {cwd: path.dirname(resolve.sync('normalize-path'))}))
+    isGlob.should.equal('node_modules/normalize-path/package.json');
+    var isGlob = norm(lookup('package.json', {cwd: path.dirname(resolve.sync('is-glob'))}))
+    isGlob.should.equal('node_modules/is-glob/package.json');
   });
 
   it('should support glob patterns', function () {
-    norm(lookup('**/c/package.json', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/package.json');
-    norm(lookup('**/one.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/d/one.txt');
-    norm(lookup('**/two.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/two.txt');
+    norm(lookup('**/c/package.json', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/package.json');
+    norm(lookup('**/one.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/d/one.txt');
+    norm(lookup('**/two.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/two.txt');
   });
 
   it('should support arrays of glob patterns', function () {
-    norm(lookup(['**/c/package.json'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/package.json');
-    norm(lookup(['**/one.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/d/one.txt');
-    norm(lookup(['**/two.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.eql('fixtures/a/b/c/two.txt');
+    norm(lookup(['**/c/package.json'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/package.json');
+    norm(lookup(['**/one.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/d/one.txt');
+    norm(lookup(['**/two.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/two.txt');
   });
 
   it('should support minimatch `matchBase` option:', function () {
     var opts = { matchBase: true, cwd: 'fixtures/a/b/c/d/e/f/g' };
-    norm(lookup('package.json', opts)).should.eql('fixtures/a/b/c/d/e/f/g/package.json');
-    norm(lookup('one.txt', opts)).should.eql('fixtures/a/b/c/d/one.txt');
-    norm(lookup('two.txt', opts)).should.eql('fixtures/a/b/c/two.txt');
-    norm(lookup('?.md', opts)).should.eql('fixtures/a/b/a.md');
+    norm(lookup('package.json', opts)).should.equal('fixtures/a/b/c/d/e/f/g/package.json');
+    norm(lookup('one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
+    norm(lookup('two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
+    norm(lookup('?.md', opts)).should.equal('fixtures/a/b/a.md');
   });
 
   it('should return `null` when no files are found:', function () {

@@ -7,41 +7,53 @@
 var fs = require('fs');
 var path = require('path');
 var normalize = require('normalize-path');
+var isGlob = require('is-glob');
 var mm = require('multimatch');
+var dir = sanitize(process.cwd());
 
 /**
  * Expose `lookup`
  */
 
-module.exports = function lookup(pattern, options) {
-  if (typeof pattern !== 'string' && !Array.isArray(pattern)) {
+module.exports = function lookup(patterns, options) {
+  if (typeof patterns !== 'string' && !Array.isArray(patterns)) {
     throw new TypeError('look-up expects a string or array as the first argument.');
   }
 
-  pattern = typeof pattern === 'string'
-    ? [pattern]
-    : pattern;
+  patterns = typeof patterns === 'string'
+    ? [patterns]
+    : patterns;
 
   options = options || {matchBase: true};
-
   var cwd = options.cwd || process.cwd();
+  var plen = patterns.length;
+
+  while (plen--) {
+    var pattern = patterns[plen];
+    if (isGlob(pattern)) {
+      continue;
+    }
+
+    var tmp = path.join(cwd, pattern);
+    if (fs.existsSync(tmp)) {
+      return tmp;
+    }
+  }
+
   var files = fs.readdirSync(cwd);
   var len = files.length;
-  var i = 0;
 
-  while (i < len) {
-    var fp = path.join(cwd, files[i++]);
-    if (path.dirname(fp) === '.') {
-      break;
-    }
-    var match = mm(fp, pattern, options);
+  while (len--) {
+    var fp = path.join(cwd, files[len]);
+    if (path.dirname(fp) === '.') break;
+
+    var match = mm(fp, patterns, options);
     if (match.length === 0) {
       continue;
     }
     return fp;
   }
 
-  var dir = sanitize(process.cwd());
   if (dir === sanitize(cwd)) {
     return cwd;
   }
@@ -52,7 +64,7 @@ module.exports = function lookup(pattern, options) {
   }
 
   options.cwd = cwd;
-  return lookup(pattern, options);
+  return lookup(patterns, options);
 };
 
 /**
