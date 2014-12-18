@@ -6,7 +6,7 @@ var suite = new Suite({
   result: false,
   fixtures: 'fixtures/*.js',
   add: 'code/*.js',
-  cwd: 'benchmark'
+  cwd: __dirname
 });
 
 suite.run();
