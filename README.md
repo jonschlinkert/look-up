@@ -44,8 +44,27 @@ node benchmark
 
 Benchmarks were run on [mac and windows](https://github.com/jonschlinkert/look-up/issues/1). look-up is 20-50x faster than [findup-sync] on avg.
 
-![image](https://cloud.githubusercontent.com/assets/383994/5243412/e364fc7c-7911-11e4-989f-10d24bebcacc.png)
+```bash
+#1: deep-close
+  findup x 904 ops/sec ±2.00% (86 runs sampled)
+  lookup x 36,579 ops/sec ±1.34% (91 runs sampled)
 
+#2: deep-far
+  findup x 123 ops/sec ±2.12% (78 runs sampled)
+  lookup x 26,860 ops/sec ±1.01% (93 runs sampled)
+
+#3: nested
+  findup x 266 ops/sec ±2.20% (81 runs sampled)
+  lookup x 18,829 ops/sec ±1.59% (92 runs sampled)
+
+#4: non-glob
+  findup x 5,229 ops/sec ±1.99% (89 runs sampled)
+  lookup x 72,916 ops/sec ±1.54% (91 runs sampled)
+
+#5: shallow
+  findup x 171 ops/sec ±2.83% (78 runs sampled)
+  lookup x 18,955 ops/sec ±1.47% (91 runs sampled)
+```
 
 ## Running tests
 
