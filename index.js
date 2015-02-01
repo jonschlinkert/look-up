@@ -14,7 +14,16 @@ var dir = process.cwd();
  * Expose `lookup`
  */
 
-module.exports = function lookup(patterns, options) {
+module.exports = lookup;
+
+/**
+ * @param  {String|Array} `patterns` Glob pattern(s) or file path(s) to match against.
+ * @param  {Object} `options` Options to pass to [micromatch]. Note that if you want to start in a different directory than the current working directory, specify a `cwd` property here.
+ * @return {String} Returns the first matching file.
+ * @api public
+ */
+
+function lookup(patterns, options) {
   if (typeof patterns !== 'string' && !Array.isArray(patterns)) {
     throw new TypeError('look-up expects a string or array as the first argument.');
   }
@@ -42,7 +51,9 @@ module.exports = function lookup(patterns, options) {
       if (fs.existsSync(file)) {
         return file;
       }
-    } else if (!/\*\*/.test(pattern)) {
+    }
+
+    if (!/\*\*/.test(pattern)) {
       opts.matchBase = true;
     }
   }
@@ -55,7 +66,7 @@ module.exports = function lookup(patterns, options) {
     var fp = path.join(cwd, files[flen]);
 
     // if the current directory is the actual cwd, break out
-    if (path.dirname(fp) === '.') break;
+    if (path.dirname(fp) === '.') { break; }
 
     // if the file path matches the pattern(s), return it
     var match = mm(fp, patterns, opts);
@@ -69,9 +80,9 @@ module.exports = function lookup(patterns, options) {
   cwd = path.resolve(cwd, '..');
 
   // we're past the actual cwd with no matches.
-  if (cwd === dir) return null;
+  if (cwd === dir) { return null; }
 
   // try again
   opts.cwd = cwd;
   return lookup(patterns, opts);
-};
+}
