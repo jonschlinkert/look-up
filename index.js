@@ -7,8 +7,8 @@
 var fs = require('fs');
 var path = require('path');
 var isGlob = require('is-glob');
+var expand = require('expand-tilde');
 var mm = require('micromatch');
-var dir = process.cwd();
 
 /**
  * Expose `lookup`
@@ -33,54 +33,53 @@ function lookup(patterns, options) {
     ? [patterns]
     : patterns;
 
+  var dir = process.cwd();
   var opts = options || {};
-  var cwd = opts.cwd || process.cwd();
-  var len = patterns.length;
+  var cwd = opts.cwd || dir;
+  cwd = expand(cwd);
 
-  // loop over patterns
-  while (len--) {
+  // store a reference to the cwd we just checked
+  var prev = cwd;
+
+  for (var len = patterns.length - 1; len >= 0; len--) {
     var pattern = patterns[len];
 
     // if the pattern is a glob pattern, move on
     if (!isGlob(pattern)) {
+      var file = path.resolve(cwd, pattern);
 
-      // if the pattern is not a glob pattern, try
-      // to see if it resolves to an actual file so
-      // we can avoid using fs.readdir and matching
-      var file = path.join(cwd, pattern);
+      // we can avoid fs.readdir if it resolves to an actual file
       if (fs.existsSync(file)) {
         return file;
       }
-    }
+    } else {
+      try {
+        var files = fs.readdirSync(cwd);
+        for (var i = files.length - 1; i >= 0; i--) {
+          var fp = files[i];
+          // try matching against the basename in the cwd
+          if (mm.isMatch(fp, pattern, opts)) {
+            return path.resolve(cwd, fp);
+          }
 
-    if (!/\*\*/.test(pattern)) {
-      opts.matchBase = true;
-    }
-  }
-
-  var files = fs.readdirSync(cwd);
-  var flen = files.length;
-
-  // loop through the files in the current directory
-  while (flen--) {
-    var fp = path.join(cwd, files[flen]);
-
-    // if the current directory is the actual cwd, break out
-    if (path.dirname(fp) === '.') { break; }
-
-    // if the file path matches the pattern(s), return it
-    var match = mm(fp, patterns, opts);
-    if (match.length !== 0) {
-      return fp;
+          // try matching against the absolute path
+          fp = path.resolve(cwd, fp);
+          if (mm.isMatch(fp, pattern)) {
+            return fp;
+          }
+        }
+      } catch (err) {
+        if (opts.verbose) { throw err; }
+      }
     }
   }
 
-  // nothing was matched in the last dir, so move up a
+  // nothing was matched in the previous dir, so move up a
   // directory and create a new `cwd` for the search
   cwd = path.resolve(cwd, '..');
 
   // we're past the actual cwd with no matches.
-  if (cwd === dir) { return null; }
+  if (prev === cwd) { return null; }
 
   // try again
   opts.cwd = cwd;

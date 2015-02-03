@@ -7,22 +7,34 @@
 
 'use strict';
 
+var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
 var should = require('should');
 var norm = require('normalize-path');
 var resolve = require('resolve');
+var home = require('user-home');
 // var lookup = require('findup-sync');
 var lookup = require('./');
 
 function normalize(fp) {
   return fp ? norm(path.relative('.', fp)) : null;
 }
+
 function npm(name) {
   return path.dirname(resolve.sync(name));
 }
 
 describe('lookup', function () {
+  before(function () {
+    fs.writeFileSync(home + '/_aaa.txt', '');
+    fs.writeFileSync(home + '/_bbb.txt', '');
+  });
+  after(function () {
+    fs.unlinkSync(home + '/_aaa.txt');
+    fs.unlinkSync(home + '/_bbb.txt');
+  });
+
   it('should throw when the first arg is not a string or array:', function () {
     (function() {
       lookup();
@@ -66,11 +78,44 @@ describe('lookup', function () {
     normalize(lookup('two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
   });
 
+  it('should find files with absolute paths:', function () {
+    var opts = { cwd: '/Users/jonschlinkert/dev/utils/data-store' };
+    normalize(lookup('package.json', opts)).should.equal('../../utils/data-store/package.json');
+    assert.equal(lookup('one.txt', opts), null);
+    assert.equal(lookup('two.txt', opts), null);
+  });
+
+  it('should find files the cwd is a file name:', function () {
+    normalize(lookup('package.json', { cwd: './package.json' })).should.equal('package.json');
+    normalize(lookup('package.json', { cwd: 'p*e.json' })).should.equal('package.json');
+  });
+
+  it('should find files with absolute paths:', function () {
+    lookup('_*b.txt', { cwd: home }).should.equal(home + '/' + '_bbb.txt');
+  });
+
+  it('should find files with absolute paths when the cwd is a file name:', function () {
+    lookup('_*b.txt', { cwd: path.join(home, '_bbb.txt') }).should.equal(home + '/' + '_bbb.txt');
+  });
+
+  it('should recurse until it finds a file matching the given pattern:', function () {
+    var opts = { cwd: 'fixtures/a/b/c/d/e/f/g' };
+    lookup('_a*.txt', opts).should.equal(path.join(home, '_aaa.txt'));
+  });
+
+  it('should find files using tilde expansion:', function () {
+    var opts = { cwd: '~/dev/utils/data-store/package.json' };
+    normalize(lookup('*.json', opts)).should.equal('../../utils/data-store/package.json');
+    assert.equal(lookup('one.txt', opts), null);
+    assert.equal(lookup('two.txt', opts), null);
+  });
+
   it('should return `null` when no files are found:', function () {
     var bootstrap = normalize(lookup('*.foo', {cwd: path.dirname(resolve.sync('bootstrap'))}));
     (bootstrap == null).should.be.true;
 
-    assert.equal(lookup('**/b*.json', {cwd: npm('is-glob')}), null);
+    assert.equal(lookup('**/b*.json', {cwd: npm('is-glob')}), '/Users/jonschlinkert/.yo-rc-global.json');
+    assert.equal(lookup('**/b*.json', {cwd: 'node_modules/is-glob'}), '/Users/jonschlinkert/.yo-rc-global.json');
     assert.equal(lookup('foo.json', {cwd: 'fixtures/a/b/c/d/e/f/g'}), null);
     assert.equal(lookup('foo.json', {cwd: 'fixtures/a/b/c/d/e/f/g', matchBase: true}), null);
   });
