@@ -1,7 +1,7 @@
 {
   "name": "look-up",
   "description": "Like findup-sync and supports the same features but 20x-40x faster on avg.",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "homepage": "https://github.com/jonschlinkert/look-up",
   "author": {
     "name": "Jon Schlinkert",
@@ -22,12 +22,15 @@
   "engines": {
     "node": ">=0.10.0"
   },
-  "files": ["index.js"],
+  "files": [
+    "index.js"
+  ],
   "scripts": {
     "test": "mocha",
-    "benchmark": "node benchmark"
+    "benchmark": "npm run benchmark"
   },
   "dependencies": {
+    "expand-tilde": "^1.2.0",
     "is-glob": "^1.1.0",
     "micromatch": "^1.2.2"
   },
@@ -38,7 +41,8 @@
     "mocha": "*",
     "normalize-path": "^0.3.0",
     "resolve": "^1.0.0",
-    "should": "*"
+    "should": "*",
+    "user-home": "^1.1.1"
   },
   "keywords": [
     "file",
