@@ -7,7 +7,7 @@
 var fs = require('fs');
 var path = require('path');
 var isGlob = require('is-glob');
-var expand = require('expand-tilde');
+var expandTilde = require('expand-tilde');
 var mm = require('micromatch');
 
 /**
@@ -23,7 +23,7 @@ module.exports = lookup;
  * @api public
  */
 
-function lookup(patterns, options) {
+function lookup(patterns, opts, cwd) {
   if (typeof patterns !== 'string' && !Array.isArray(patterns)) {
     throw new TypeError('look-up expects a string or array as the first argument.');
   }
@@ -33,10 +33,8 @@ function lookup(patterns, options) {
     ? [patterns]
     : patterns;
 
-  var dir = process.cwd();
-  var opts = options || {};
-  var cwd = opts.cwd || dir;
-  cwd = expand(cwd);
+  cwd = cwd || opts && opts.cwd || process.cwd();
+  cwd = expandTilde(cwd);
 
   // store a reference to the cwd we just checked
   var prev = cwd;
@@ -57,6 +55,7 @@ function lookup(patterns, options) {
         var files = fs.readdirSync(cwd);
         for (var i = files.length - 1; i >= 0; i--) {
           var fp = files[i];
+
           // try matching against the basename in the cwd
           if (mm.isMatch(fp, pattern, opts)) {
             return path.resolve(cwd, fp);
@@ -64,12 +63,12 @@ function lookup(patterns, options) {
 
           // try matching against the absolute path
           fp = path.resolve(cwd, fp);
-          if (mm.isMatch(fp, pattern)) {
+          if (mm.isMatch(fp, pattern, opts)) {
             return fp;
           }
         }
       } catch (err) {
-        if (opts.verbose) { throw err; }
+        if (opts && opts.verbose) { throw err; }
       }
     }
   }
@@ -82,6 +81,5 @@ function lookup(patterns, options) {
   if (prev === cwd) { return null; }
 
   // try again
-  opts.cwd = cwd;
-  return lookup(patterns, opts);
+  return lookup(patterns, opts, cwd);
 }
