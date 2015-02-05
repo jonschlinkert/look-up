@@ -54,9 +54,11 @@ describe('lookup', function () {
   });
 
   it('should support glob patterns', function () {
-    normalize(lookup('**/c/package.json', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/package.json');
-    normalize(lookup('**/one.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/d/one.txt');
-    normalize(lookup('**/two.txt', {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/two.txt');
+    var opts = {cwd: 'fixtures/a/b/c/d/e/f/g'};
+    normalize(lookup('**/c/package.json', opts)).should.equal('fixtures/a/b/c/package.json');
+    normalize(lookup('c/package.json', opts)).should.equal('fixtures/a/b/c/package.json');
+    normalize(lookup('**/one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
+    normalize(lookup('**/two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
 
     var bs1 = normalize(lookup('b*.json', {cwd: npm('bootstrap')}));
     bs1.should.equal('node_modules/bootstrap/bower.json');
@@ -71,11 +73,17 @@ describe('lookup', function () {
     normalize(lookup(['**/two.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/two.txt');
   });
 
-  it('should support minimatch `matchBase` option:', function () {
+  it('should support micromatch `matchBase` option:', function () {
     var opts = { matchBase: true, cwd: 'fixtures/a/b/c/d/e/f/g' };
     normalize(lookup('package.json', opts)).should.equal('fixtures/a/b/c/d/e/f/g/package.json');
     normalize(lookup('one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
     normalize(lookup('two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
+  });
+
+  it.only('should support micromatch `nocase` option:', function () {
+    normalize(lookup('ONE.*', { cwd: 'fixtures/a/b' })).should.equal('fixtures/a/b/one.js');
+    normalize(lookup('one.*', { cwd: 'fixtures/a/b' })).should.equal('fixtures/a/b/one.txt');
+    normalize(lookup('one.*', { cwd: 'fixtures/a/b', nocase: true })).should.equal('fixtures/a/b/one.txt');
   });
 
   it('should find files with absolute paths:', function () {
