@@ -68,9 +68,10 @@ describe('lookup', function () {
   });
 
   it('should support arrays of glob patterns', function () {
-    normalize(lookup(['**/c/package.json'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/package.json');
-    normalize(lookup(['**/one.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/d/one.txt');
-    normalize(lookup(['**/two.txt'], {cwd: 'fixtures/a/b/c/d/e/f/g'})).should.equal('fixtures/a/b/c/two.txt');
+    var opts = {cwd: 'fixtures/a/b/c/d/e/f/g'};
+    normalize(lookup(['**/c/package.json'], opts)).should.equal('fixtures/a/b/c/package.json');
+    normalize(lookup(['**/one.txt'], opts)).should.equal('fixtures/a/b/c/d/one.txt');
+    normalize(lookup(['**/two.txt'], opts)).should.equal('fixtures/a/b/c/two.txt');
   });
 
   it('should support micromatch `matchBase` option:', function () {
@@ -80,10 +81,9 @@ describe('lookup', function () {
     normalize(lookup('two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
   });
 
-  it.only('should support micromatch `nocase` option:', function () {
+  it('should support micromatch `nocase` option:', function () {
     normalize(lookup('ONE.*', { cwd: 'fixtures/a/b' })).should.equal('fixtures/a/b/one.js');
-    normalize(lookup('one.*', { cwd: 'fixtures/a/b' })).should.equal('fixtures/a/b/one.txt');
-    normalize(lookup('one.*', { cwd: 'fixtures/a/b', nocase: true })).should.equal('fixtures/a/b/one.txt');
+    normalize(lookup('ONE.*', { cwd: 'fixtures/a/b', nocase: true })).should.equal('fixtures/a/b/one.txt');
   });
 
   it('should find files with absolute paths:', function () {
@@ -109,21 +109,15 @@ describe('lookup', function () {
   it('should recurse until it finds a file matching the given pattern:', function () {
     var opts = { cwd: 'fixtures/a/b/c/d/e/f/g' };
     lookup('_a*.txt', opts).should.equal(path.join(home, '_aaa.txt'));
+    lookup('_aaa.*', {cwd: npm('is-glob')}).should.equal(home + '/_aaa.txt');
+    lookup('_aaa.*', {cwd: 'node_modules/is-glob'}).should.equal(home + '/_aaa.txt');
   });
 
   it('should find files using tilde expansion:', function () {
-    var opts = { cwd: '~/dev/utils/data-store/package.json' };
-    normalize(lookup('*.json', opts)).should.equal('../../utils/data-store/package.json');
-    assert.equal(lookup('one.txt', opts), null);
-    assert.equal(lookup('two.txt', opts), null);
+    lookup('*.txt', { cwd: '~' }).should.equal(home + '/_bbb.txt');
   });
 
   it('should return `null` when no files are found:', function () {
-    var bootstrap = normalize(lookup('*.foo', {cwd: path.dirname(resolve.sync('bootstrap'))}));
-    (bootstrap == null).should.be.true;
-
-    assert.equal(lookup('**/b*.json', {cwd: npm('is-glob')}), '/Users/jonschlinkert/.yo-rc-global.json');
-    assert.equal(lookup('**/b*.json', {cwd: 'node_modules/is-glob'}), '/Users/jonschlinkert/.yo-rc-global.json');
     assert.equal(lookup('foo.json', {cwd: 'fixtures/a/b/c/d/e/f/g'}), null);
     assert.equal(lookup('foo.json', {cwd: 'fixtures/a/b/c/d/e/f/g', matchBase: true}), null);
   });
