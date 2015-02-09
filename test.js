@@ -15,7 +15,7 @@ var norm = require('normalize-path');
 var resolve = require('resolve');
 var home = require('user-home');
 // var lookup = require('findup-sync');
-var lookup = require('./example');
+var lookup = require('./');
 
 function normalize(fp) {
   return fp ? norm(path.relative('.', fp)) : null;
