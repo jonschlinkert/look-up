@@ -23,7 +23,7 @@ module.exports = lookup;
  * @api public
  */
 
-function lookup(patterns, opts, cwd) {
+function lookup(patterns, opts) {
   if (typeof patterns !== 'string' && !Array.isArray(patterns)) {
     throw new TypeError('look-up expects a string or array as the first argument.');
   }
@@ -33,53 +33,57 @@ function lookup(patterns, opts, cwd) {
     ? [patterns]
     : patterns;
 
-  cwd = cwd || opts && opts.cwd || process.cwd();
-  cwd = expandTilde(cwd);
+  var cwd = (opts && opts.cwd) || '.';
+  cwd = path.resolve(expandTilde(cwd));
 
-  // store a reference to the cwd we just checked
-  var prev = cwd;
+  var segs = cwd.split(/[\\\/]/);
+  var slen = segs.length;
 
-  for (var len = patterns.length - 1; len >= 0; len--) {
+  while (slen--) {
+    var dir = segs.join('/');
+
+    var fp = findFile(dir, patterns, opts);
+    if (fp) { return fp; }
+    segs.pop();
+  }
+  return null;
+}
+
+function findFile(cwd, patterns, opts) {
+  var len = patterns.length;
+
+  while (len--) {
     var pattern = patterns[len];
-
-    // if the pattern is a glob pattern, move on
     if (!isGlob(pattern)) {
-      var file = path.resolve(cwd, pattern);
+      var fp = join(cwd, pattern);
 
-      // we can avoid fs.readdir if it resolves to an actual file
-      if (fs.existsSync(file)) {
-        return file;
-      }
+      // we can avoid fs.readdir if this
+      // resolves to an actual file
+      if (fs.existsSync(fp)) { return fp; }
+
     } else {
       try {
         var files = fs.readdirSync(cwd);
-        for (var i = files.length - 1; i >= 0; i--) {
-          var fp = files[i];
+        var re = mm.makeRe(pattern, opts);
+
+        for (var i = 0; i < files.length; i++) {
+          var name = files[i];
+          var file = join(cwd, name);
 
           // try matching against the basename in the cwd
-          if (mm.isMatch(fp, pattern, opts)) {
-            return path.resolve(cwd, fp);
-          }
+          if (re.test(name)) { return file; }
 
           // try matching against the absolute path
-          fp = path.resolve(cwd, fp);
-          if (mm.isMatch(fp, pattern, opts)) {
-            return fp;
-          }
+          if (re.test(file)) { return file; }
         }
       } catch (err) {
         if (opts && opts.verbose) { throw err; }
       }
     }
   }
+  return null;
+}
 
-  // nothing was matched in the previous dir, so move up a
-  // directory and create a new `cwd` for the search
-  cwd = path.resolve(cwd, '..');
-
-  // we're past the actual cwd with no matches.
-  if (prev === cwd) { return null; }
-
-  // try again
-  return lookup(patterns, opts, cwd);
+function join(dir, fp) {
+  return dir + '/' + fp;
 }
