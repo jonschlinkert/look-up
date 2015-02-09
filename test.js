@@ -15,7 +15,7 @@ var norm = require('normalize-path');
 var resolve = require('resolve');
 var home = require('user-home');
 // var lookup = require('findup-sync');
-var lookup = require('./');
+var lookup = require('./example');
 
 function normalize(fp) {
   return fp ? norm(path.relative('.', fp)) : null;
@@ -82,8 +82,10 @@ describe('lookup', function () {
   });
 
   it('should support micromatch `nocase` option:', function () {
-    normalize(lookup('ONE.*', { cwd: 'fixtures/a/b' })).should.equal('fixtures/a/b/one.js');
-    normalize(lookup('ONE.*', { cwd: 'fixtures/a/b', nocase: true })).should.equal('fixtures/a/b/one.txt');
+    var opts = { cwd: 'fixtures/a/b/c' };
+    normalize(lookup('one.*', opts)).should.equal('fixtures/a/b/one.txt');
+    opts.nocase = true;
+    normalize(lookup('ONE.*', opts)).should.equal('fixtures/a/b/c/one.txt');
   });
 
   it('should find files with absolute paths:', function () {
@@ -114,7 +116,7 @@ describe('lookup', function () {
   });
 
   it('should find files using tilde expansion:', function () {
-    lookup('*.txt', { cwd: '~' }).should.equal(home + '/_bbb.txt');
+    lookup('*.txt', { cwd: '~' }).should.equal(home + '/_aaa.txt');
   });
 
   it('should return `null` when no files are found:', function () {
