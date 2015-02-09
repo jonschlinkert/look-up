@@ -41,6 +41,12 @@ describe('lookup', function () {
     }).should.throw('look-up expects a string or array as the first argument.')
   });
 
+  it('should throw on bad paths when `verbose` is true:', function () {
+    (function() {
+      var res = lookup('{}', {verbose: true});
+    }).should.throw('ENOENT, no such file or directory \'\'');
+  });
+
   it('should work when no cwd is given', function () {
     normalize(lookup('package.json')).should.equal('package.json');
   });
