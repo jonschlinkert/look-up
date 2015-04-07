@@ -53,7 +53,7 @@ function findFile(cwd, patterns, opts) {
   var len = patterns.length;
 
   while (len--) {
-    var pattern = patterns[len];
+    var pattern = expandTilde(patterns[len]);
     if (!isGlob(pattern)) {
       var fp = join(cwd, pattern);
 
@@ -70,11 +70,11 @@ function findFile(cwd, patterns, opts) {
           var name = files[i];
           var file = join(cwd, name);
 
-          // try matching against the basename in the cwd
-          if (re.test(name)) { return file; }
-
-          // try matching against the absolute path
-          if (re.test(file)) { return file; }
+          // try matching against the basename in the cwd,
+          // or the absolute path
+          if (re.test(name) || re.test(file)) {
+            return file;
+          }
         }
       } catch (err) {
         if (opts && opts.verbose) { throw err; }

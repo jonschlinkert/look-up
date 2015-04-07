@@ -7,6 +7,7 @@
 
 'use strict';
 
+/* deps:mocha */
 var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
@@ -90,13 +91,13 @@ describe('lookup', function () {
   it('should support micromatch `nocase` option:', function () {
     var opts = { cwd: 'fixtures/a/b/c' };
     normalize(lookup('one.*', opts)).should.equal('fixtures/a/b/one.txt');
-    opts.nocase = true;
-    normalize(lookup('ONE.*', opts)).should.equal('fixtures/a/b/c/one.txt');
+    opts.nocase = true; // matches ONE
+    normalize(lookup('one.*', opts)).should.equal('fixtures/a/b/c/one.txt');
   });
 
   it('should find files with absolute paths:', function () {
-    var opts = { cwd: '/Users/jonschlinkert/dev/utils/data-store' };
-    normalize(lookup('package.json', opts)).should.equal('../../utils/data-store/package.json');
+    var opts = { cwd: '/Users/jonschlinkert/dev/verb/verb' };
+    normalize(lookup('package.json', opts)).should.equal('../../verb/verb/package.json');
     assert.equal(lookup('one.txt', opts), null);
     assert.equal(lookup('two.txt', opts), null);
   });
@@ -123,6 +124,7 @@ describe('lookup', function () {
 
   it('should find files using tilde expansion:', function () {
     lookup('*.txt', { cwd: '~' }).should.equal(home + '/_aaa.txt');
+    lookup('~/*.txt').should.equal(home + '/_aaa.txt');
   });
 
   it('should return `null` when no files are found:', function () {
