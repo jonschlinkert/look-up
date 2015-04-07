@@ -2,7 +2,7 @@
  * look-up <https://github.com/jonschlinkert/look-up>
  *
  * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT License
+ * Licensed under the MIT License.
  */
 
 'use strict';
