@@ -62,6 +62,7 @@ describe('lookup', function () {
 
   it('should support glob patterns', function () {
     var opts = {cwd: 'fixtures/a/b/c/d/e/f/g'};
+    normalize(lookup('**/c/k/l/package.json', opts)).should.equal('fixtures/a/b/c/k/l/package.json');
     normalize(lookup('**/c/package.json', opts)).should.equal('fixtures/a/b/c/package.json');
     normalize(lookup('c/package.json', opts)).should.equal('fixtures/a/b/c/package.json');
     normalize(lookup('**/one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
