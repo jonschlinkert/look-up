@@ -1,26 +1,53 @@
-/*!
- * look-up <https://github.com/jonschlinkert/look-up>
- *
- * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT License.
- */
-
 'use strict';
 
-/* deps:mocha */
+require('mocha');
+require('should');
 var fs = require('fs');
 var path = require('path');
 var assert = require('assert');
-var should = require('should');
-var norm = require('normalize-path');
 var resolve = require('resolve');
+var expand = require('resolve-dir');
+var isAbsolute = require('is-absolute');
+var norm = require('normalize-path');
 var home = require('user-home');
-// var lookup = require('findup-sync');
+var argv = require('minimist')(process.argv.slice(2));
 var lookup = require('./');
+var cwd, actual, opts;
 
-function normalize(fp) {
-  return fp ? norm(path.relative('.', fp)) : null;
+if (argv.bench) {
+  var b = path.join(__dirname, 'benchmark/code', argv.bench);
+  console.log(b);
+  lookup = require(b);
 }
+
+assert.isPath = function (fp, basename) {
+  assert(fp);
+  assert.equal(typeof fp, 'string');
+};
+
+assert.isAbsolute = function (fp) {
+  assert(fp);
+  assert(isAbsolute(fp));
+};
+
+assert.exists = function (fp) {
+  assert(fp);
+  try {
+    fs.statSync(fp);
+  } catch(err) {
+    assert(fp, err);
+  }
+};
+
+assert.basename = function (fp, basename) {
+  assert(fp);
+  assert.equal(path.basename(fp), basename);
+};
+
+assert.dirname = function (fp, dirname) {
+  assert(fp);
+  assert.equal(path.dirname(path.resolve(fp)), path.resolve(dirname));
+};
 
 function npm(name) {
   return path.dirname(resolve.sync(name));
@@ -39,92 +66,135 @@ describe('lookup', function () {
   it('should throw when the first arg is not a string or array:', function () {
     (function() {
       lookup();
-    }).should.throw('look-up expects a string or array as the first argument.')
-  });
-
-  it('should throw on bad paths when `verbose` is true:', function () {
-    (function() {
-      var res = lookup('{}', {verbose: true});
-    }).should.throw('ENOENT, no such file or directory \'\'');
+    }).should.throw('expected a string.')
   });
 
   it('should work when no cwd is given', function () {
-    normalize(lookup('package.json')).should.equal('package.json');
+    var actual = lookup('package.json');
+    assert(actual);
+    assert.dirname(actual, __dirname);
+    assert.basename(actual, 'package.json');
   });
 
   it('should support normal (non-glob) file paths:', function () {
-    var normPath = normalize(lookup('package.json', {cwd: path.dirname(resolve.sync('normalize-path'))}))
-    normPath.should.equal('node_modules/normalize-path/package.json');
+    cwd = path.dirname(resolve.sync('normalize-path'));
+    var actual = lookup('package.json', {cwd: cwd});
+    assert.dirname(actual, cwd);
+    assert.basename(actual, 'package.json');
 
-    var isGlob = normalize(lookup('package.json', {cwd: path.dirname(resolve.sync('is-glob'))}))
-    isGlob.should.equal('node_modules/is-glob/package.json');
+    actual = lookup('c/package.json', {cwd: 'fixtures/a/b/c/d/e/f/g'});
+    assert.basename(actual, 'package.json');
+    assert.dirname(actual, 'fixtures/a/b/c');
+
+    cwd = path.dirname(resolve.sync('is-glob'));
+    actual = lookup('package.json', {cwd: cwd});
+    assert.dirname(actual, cwd);
+    assert.basename(actual, 'package.json');
   });
 
   it('should support glob patterns', function () {
     var opts = {cwd: 'fixtures/a/b/c/d/e/f/g'};
-    normalize(lookup('**/c/package.json', opts)).should.equal('fixtures/a/b/c/package.json');
-    normalize(lookup('c/package.json', opts)).should.equal('fixtures/a/b/c/package.json');
-    normalize(lookup('**/one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
-    normalize(lookup('**/two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
 
-    var bs1 = normalize(lookup('b*.json', {cwd: npm('bootstrap')}));
-    bs1.should.equal('node_modules/bootstrap/bower.json');
+    actual = lookup('**/c/package.json', opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'package.json');
 
-    var bs2 = normalize(lookup('p*.json', {cwd: npm('bootstrap')}));
-    bs2.should.equal('node_modules/bootstrap/package.json');
+    actual = lookup('c/package.json', opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'package.json');
+
+    actual = lookup('**/ONE.txt', opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'ONE.txt');
+
+    actual = lookup('**/two.txt', opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'two.txt');
+
+    cwd = npm('is-glob');
+    actual = lookup('p*.json', {cwd: cwd});
+    assert.dirname(actual, cwd);
+    assert.basename(actual, 'package.json');
   });
 
-  it('should support arrays of glob patterns', function () {
-    var opts = {cwd: 'fixtures/a/b/c/d/e/f/g'};
-    normalize(lookup(['**/c/package.json'], opts)).should.equal('fixtures/a/b/c/package.json');
-    normalize(lookup(['**/one.txt'], opts)).should.equal('fixtures/a/b/c/d/one.txt');
-    normalize(lookup(['**/two.txt'], opts)).should.equal('fixtures/a/b/c/two.txt');
-  });
+  // it('should support searching from glob parent', function () {
+  //   actual = lookup('c/d/e/f/g/**/c/package.json', {cwd: 'fixtures/a/b/'});
+  //   assert.basename(actual, 'package.json');
+  //   assert.dirname(actual, 'fixtures/a/b/c');
+
+  //   actual = lookup('e/f/g/**/one.txt', {cwd: 'fixtures/a/b/c/d'});
+  //   assert.basename(actual, 'one.txt');
+  //   assert.dirname(actual, 'fixtures/a/b/c/d');
+
+  //   actual = lookup('e/f/g/**/two.txt', {cwd: 'fixtures/a/b/c/d/'});
+  //   assert.basename(actual, 'two.txt');
+  //   assert.dirname(actual, 'fixtures/a/b/c');
+
+  //   actual = lookup('p*.json', {cwd: npm('is-glob')});
+  //   assert.basename(actual, 'package.json');
+  //   assert.dirname(actual, 'node_modules/is-glob/');
+  // });
 
   it('should support micromatch `matchBase` option:', function () {
     var opts = { matchBase: true, cwd: 'fixtures/a/b/c/d/e/f/g' };
-    normalize(lookup('package.json', opts)).should.equal('fixtures/a/b/c/d/e/f/g/package.json');
-    normalize(lookup('one.txt', opts)).should.equal('fixtures/a/b/c/d/one.txt');
-    normalize(lookup('two.txt', opts)).should.equal('fixtures/a/b/c/two.txt');
+
+    actual = lookup('package.json', opts);
+    assert.basename(actual, 'package.json');
+    assert.dirname(actual, 'fixtures/a/b/c/d/e/f/g');
+
+    actual = lookup('one.txt', opts);
+    assert.basename(actual, 'one.txt');
+    assert.dirname(actual, 'fixtures/a/b/c/d');
+
+    actual = lookup('two.txt', opts);
+    assert.basename(actual, 'two.txt');
+    assert.dirname(actual, 'fixtures/a/b/c');
   });
 
   it('should support micromatch `nocase` option:', function () {
-    var opts = { cwd: 'fixtures/a/b/c' };
-    normalize(lookup('one.*', opts)).should.equal('fixtures/a/b/one.txt');
-    opts.nocase = true; // matches ONE
-    normalize(lookup('one.*', opts)).should.equal('fixtures/a/b/c/one.txt');
+    actual = lookup('ONE.*', { cwd: 'fixtures/a/b/c/d' });
+    assert.basename(actual, 'ONE.txt');
+    assert.dirname(actual, 'fixtures/a/b/c');
+
+    actual = lookup('ONE.*', { cwd: 'fixtures/a/b/c/d', nocase: true });
+    assert.basename(actual, 'one.txt');
+    assert.dirname(actual, 'fixtures/a/b/c/d');
   });
 
-  it('should find files with absolute paths:', function () {
-    var opts = { cwd: '/Users/jonschlinkert/dev/verb/verb' };
-    normalize(lookup('package.json', opts)).should.equal('../../verb/verb/package.json');
-    assert.equal(lookup('one.txt', opts), null);
-    assert.equal(lookup('two.txt', opts), null);
+  it('should find files from absolute paths:', function () {
+    var actual = lookup('package.json', { cwd: __dirname })
+
+    assert.basename(actual, 'package.json');
+    assert.dirname(actual, __dirname);
+
+    actual = lookup('one.txt', { cwd: __dirname + '/fixtures/a' });
+    assert.basename(actual, 'one.txt');
+    assert.dirname(actual, 'fixtures/a');
+
+    actual = lookup('two.txt', { cwd: __dirname + '/fixtures/a/b/c' });
+    assert.basename(actual, 'two.txt');
+    assert.dirname(actual, 'fixtures/a/b/c');
   });
 
-  it('should find files the cwd is a file name:', function () {
-    normalize(lookup('package.json', { cwd: './package.json' })).should.equal('package.json');
-    normalize(lookup('package.json', { cwd: 'p*e.json' })).should.equal('package.json');
+  it('should find files in user home:', function () {
+    var actual = lookup('*', { cwd: home });
+    assert.isPath(actual);
+    assert.exists(actual);
+    assert.dirname(actual, home);
   });
 
-  it('should find files with absolute paths:', function () {
-    lookup('_*b.txt', { cwd: home }).should.equal(home + '/' + '_bbb.txt');
+  it('should find files in user home using tilde expansion:', function () {
+    var actual = lookup('*', { cwd: '~' });
+    assert.isPath(actual);
+    assert.exists(actual);
+    assert.dirname(actual, home);
   });
 
-  it('should find files with absolute paths when the cwd is a file name:', function () {
-    lookup('_*b.txt', { cwd: path.join(home, '_bbb.txt') }).should.equal(home + '/' + '_bbb.txt');
-  });
-
-  it('should recurse until it finds a file matching the given pattern:', function () {
-    var opts = { cwd: 'fixtures/a/b/c/d/e/f/g' };
-    lookup('_a*.txt', opts).should.equal(path.join(home, '_aaa.txt'));
-    lookup('_aaa.*', {cwd: npm('is-glob')}).should.equal(home + '/_aaa.txt');
-    lookup('_aaa.*', {cwd: 'node_modules/is-glob'}).should.equal(home + '/_aaa.txt');
-  });
-
-  it('should find files using tilde expansion:', function () {
-    lookup('*.txt', { cwd: '~' }).should.equal(home + '/_aaa.txt');
-    lookup('~/*.txt').should.equal(home + '/_aaa.txt');
+  it('should find files in glob npm modules:', function () {
+    var actual = lookup('moc*', { cwd: '@/' });
+    assert.isPath(actual);
+    assert.exists(actual);
+    assert.dirname(actual, expand('@'));
   });
 
   it('should return `null` when no files are found:', function () {
