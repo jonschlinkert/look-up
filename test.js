@@ -66,7 +66,7 @@ describe('lookup', function () {
   it('should throw when the first arg is not a string or array:', function () {
     (function() {
       lookup();
-    }).should.throw('expected a string.')
+    }).should.throw('expected a string or array.')
   });
 
   it('should work when no cwd is given', function () {
@@ -117,23 +117,33 @@ describe('lookup', function () {
     assert.basename(actual, 'package.json');
   });
 
-  // it('should support searching from glob parent', function () {
-  //   actual = lookup('c/d/e/f/g/**/c/package.json', {cwd: 'fixtures/a/b/'});
-  //   assert.basename(actual, 'package.json');
-  //   assert.dirname(actual, 'fixtures/a/b/c');
+  it('should support arrays of glob patterns', function () {
+    var opts = {cwd: 'fixtures/a/b/c/d/e/f/g'};
 
-  //   actual = lookup('e/f/g/**/one.txt', {cwd: 'fixtures/a/b/c/d'});
-  //   assert.basename(actual, 'one.txt');
-  //   assert.dirname(actual, 'fixtures/a/b/c/d');
+    actual = lookup(['lslsl', '**/c/package.json'], opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'package.json');
 
-  //   actual = lookup('e/f/g/**/two.txt', {cwd: 'fixtures/a/b/c/d/'});
-  //   assert.basename(actual, 'two.txt');
-  //   assert.dirname(actual, 'fixtures/a/b/c');
+    actual = lookup(['lslsl', 'c/package.json'], opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'package.json');
 
-  //   actual = lookup('p*.json', {cwd: npm('is-glob')});
-  //   assert.basename(actual, 'package.json');
-  //   assert.dirname(actual, 'node_modules/is-glob/');
-  // });
+    actual = lookup(['lslsl', '**/ONE.txt'], opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'ONE.txt');
+
+    actual = lookup(['lslsl', '**/two.txt'], opts);
+    assert.dirname(actual, 'fixtures/a/b/c');
+    assert.basename(actual, 'two.txt');
+
+    actual = lookup(['lslsl', '**/blah.txt'], opts);
+    assert(actual === null);
+
+    cwd = npm('is-glob');
+    actual = lookup(['lslsl', 'p*.json'], {cwd: cwd});
+    assert.dirname(actual, cwd);
+    assert.basename(actual, 'package.json');
+  });
 
   it('should support micromatch `matchBase` option:', function () {
     var opts = { matchBase: true, cwd: 'fixtures/a/b/c/d/e/f/g' };
@@ -190,7 +200,7 @@ describe('lookup', function () {
     assert.dirname(actual, home);
   });
 
-  it('should find files in glob npm modules:', function () {
+  it('should find files in global npm modules:', function () {
     var actual = lookup('moc*', { cwd: '@/' });
     assert.isPath(actual);
     assert.exists(actual);

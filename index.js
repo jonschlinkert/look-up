@@ -7,13 +7,6 @@
 var fs = require('fs');
 var path = require('path');
 var utils = require('./utils');
-var cache = {};
-
-/**
- * Expose `lookup`
- */
-
-module.exports = lookup;
 
 /**
  * @param  {String|Array} `pattern` Glob pattern or file path(s) to match against.
@@ -22,23 +15,31 @@ module.exports = lookup;
  * @api public
  */
 
-function lookup(filename, opts) {
-  if (!utils.isValidGlob(filename)) {
-    throw new TypeError('expected a string.');
+module.exports = function (patterns, options) {
+  if (typeof patterns === 'string') {
+    return lookup(patterns, options);
   }
 
-  var cwd = resolveCwd(opts || {});
-
-  try {
-    if (utils.isGlob(filename)) {
-      return matchFile(cwd, filename, opts);
-    } else {
-      return findFile(cwd, filename);
-    }
-  } catch(err) {
-    console.log(err);
+  if (!Array.isArray(patterns)) {
+    throw new TypeError('expected a string or array.');
   }
+
+  var len = patterns.length, i = -1;
+  while (++i < len) {
+    var res = lookup(patterns[i], options);
+    if (res) return res;
+  }
+
   return null;
+};
+
+function lookup(pattern, options) {
+  var cwd = resolveCwd(options || {});
+  if (utils.isGlob(pattern)) {
+    return matchFile(cwd, pattern, options);
+  } else {
+    return findFile(cwd, pattern);
+  }
 }
 
 function matchFile(cwd, pattern, opts) {
@@ -53,19 +54,30 @@ function matchFile(cwd, pattern, opts) {
       return fp;
     }
   }
-  cwd = path.dirname(cwd);
-  return matchFile(cwd, pattern, opts);
+
+  var dir = path.dirname(cwd);
+  if (dir === cwd) return null;
+
+  return matchFile(dir, pattern, opts);
 }
 
 function findFile(cwd, filename) {
-  var fp = path.join(cwd, filename);
+  var fp = cwd ? (cwd + '/' + filename) : filename;
   if (fs.existsSync(fp)) {
-    return path.resolve(fp);
+    return fp;
   }
-  var last = cwd;
-  cwd = path.dirname(cwd);
-  if (cwd === last) return null;
-  return findFile(cwd, filename);
+
+  var segs = cwd.split(path.sep);
+  var len = segs.length - 1;
+
+  while (len--) {
+    cwd = segs.slice(0, len).join('/');
+    fp = cwd + '/' + filename;
+    if (fs.existsSync(fp)) {
+      return fp;
+    }
+  }
+  return null;
 }
 
 function resolveCwd(opts) {
@@ -75,3 +87,4 @@ function resolveCwd(opts) {
   }
   return cwd;
 }
+

@@ -15,10 +15,8 @@ require = utils;
  */
 
 require('is-glob');
-require('is-valid-glob');
 require('normalize-path', 'normalize');
 require('resolve-dir', 'resolve');
-// require('minimatch', 'mm');
 require('micromatch', 'mm');
 
 /**

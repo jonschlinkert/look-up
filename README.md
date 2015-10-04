@@ -1,6 +1,8 @@
 # look-up [![NPM version](https://badge.fury.io/js/look-up.svg)](http://badge.fury.io/js/look-up)  [![Build Status](https://travis-ci.org/jonschlinkert/look-up.svg)](https://travis-ci.org/jonschlinkert/look-up)
 
-> Like findup-sync and supports the same features but 20x-40x faster on avg.
+> Faster drop-in replacement for find-up and findup-sync.
+
+## Install
 
 Install with [npm](https://www.npmjs.com/)
 
@@ -8,68 +10,69 @@ Install with [npm](https://www.npmjs.com/)
 $ npm i look-up --save
 ```
 
-See the [benchmarks](#run-benchmarks) or [tests](./test.js).
+See the [benchmarks](#run-benchmarks) or [unit tests](./test.js).
 
 ## Usage
 
 ```js
 var lookup = require('look-up');
-lookup(pattern, {cwd: cwd, ...});
+lookup('package.json');
+//=> '/Users/jonschlinkert/dev/look-up/package.json'
 ```
 
-* `pattern` **{String|Array}**: glob pattern for the file to find
-* `options` **{Object}**: options to pass to [micromatch](https://github.com/jonschlinkert/micromatch)
-  - `cwd` **{String}**: the directory to start looking (upwards) from
-
-**Examples:**
+look-up will recurse _up from the cwd_ until it finds the given file.
 
 ```js
-lookup('**/c/package.json', { cwd: 'fixtures/a/b/c/d/e/f/g' });
-//=> 'fixtures/a/b/c/package.json'
+lookup('package.json', { cwd: 'foo/bar' });
+//=> '/Users/jonschlinkert/dev/look-up/package.json'
 ```
 
-Pass options to [micromatch](https://github.com/jonschlinkert/micromatch)
+Glob patterns are also supported (string or array):
 
 ```js
-lookup('one.txt', { cwd: 'fixtures/a/b/c/d/e/f/g', matchBase: true });
-//=> 'fixtures/a/b/c/d/one.txt'
+lookup(['*.json', '*.foo'], { cwd: 'foo/bar' });
+//=> '/Users/jonschlinkert/dev/look-up/package.json'
 ```
 
 ## Running benchmarks
 
-Install dev dependencies:
+Benchmarks were run on [mac and windows](https://github.com/jonschlinkert/look-up/issues/1). look-up is 5x-20x faster than [findup-sync](https://github.com/cowboy/node-findup-sync) and 3x faster than [find-up](https://github.com/sindresorhus/find-up)
+
+**Note** that [find-up](https://github.com/sindresorhus/find-up) does not support glob patterns, so these benchmarks only include arguments that are supported by all three libs.
+
+As of October 04, 2015:
+
+```bash
+#1: deep-close
+  findup-sync x 5,797 ops/sec ±1.66% (90 runs sampled)
+  findup x 22,972 ops/sec ±0.82% (92 runs sampled)
+  lookup x 64,389 ops/sec ±0.75% (92 runs sampled)
+
+#2: deep-far
+  findup-sync x 2,165 ops/sec ±1.01% (92 runs sampled)
+  findup x 8,250 ops/sec ±0.78% (96 runs sampled)
+  lookup x 12,730 ops/sec ±0.93% (92 runs sampled)
+
+#3: nested
+  findup-sync x 21,603 ops/sec ±0.76% (93 runs sampled)
+  findup x 103,427 ops/sec ±0.93% (95 runs sampled)
+  lookup x 381,425 ops/sec ±0.91% (91 runs sampled)
+
+#4: shallow
+  findup-sync x 6,565 ops/sec ±0.66% (92 runs sampled)
+  findup x 23,674 ops/sec ±0.89% (95 runs sampled)
+  lookup x 57,029 ops/sec ±0.83% (93 runs sampled)
+```
+
+To run the [benchmarks](./benchmark), install dev dependencies:
 
 ```bash
 npm i -d && npm run benchmark
 ```
 
-Benchmarks were run on [mac and windows](https://github.com/jonschlinkert/look-up/issues/1). look-up is 20-100x faster than [findup-sync](https://github.com/cowboy/node-findup-sync)on avg.
-
-```bash
-#1: deep-close.js
-  findup.js x 645 ops/sec ±2.04% (84 runs sampled)
-  lookup.js x 19,939 ops/sec ±0.98% (94 runs sampled)
-
-#2: deep-far.js
-  findup.js x 85.16 ops/sec ±2.07% (73 runs sampled)
-  lookup.js x 5,546 ops/sec ±0.74% (95 runs sampled)
-
-#3: nested.js
-  findup.js x 200 ops/sec ±2.13% (77 runs sampled)
-  lookup.js x 19,713 ops/sec ±0.86% (98 runs sampled)
-
-#4: non-glob.js
-  findup.js x 5,465 ops/sec ±2.20% (87 runs sampled)
-  lookup.js x 20,068 ops/sec ±2.05% (86 runs sampled)
-
-#5: shallow.js
-  findup.js x 135 ops/sec ±2.13% (75 runs sampled)
-  lookup.js x 10,228 ops/sec ±0.96% (94 runs sampled)
-```
-
 ## Related
 
-* [is-glob](https://www.npmjs.com/package/is-glob): Returns `true` if the given string looks like a glob pattern. | [homepage](https://github.com/jonschlinkert/is-glob)
+* [is-glob](https://www.npmjs.com/package/is-glob): Returns `true` if the given string looks like a glob pattern or an extglob pattern.… [more](https://www.npmjs.com/package/is-glob) | [homepage](https://github.com/jonschlinkert/is-glob)
 * [look-up-cli](https://www.npmjs.com/package/look-up-cli): Find a file matching a pattern by walking up parent directories | [homepage](https://github.com/lydell/look-up-cli)
 * [micromatch](https://www.npmjs.com/package/micromatch): Glob matching for javascript/node.js. A drop-in replacement and faster alternative to minimatch and multimatch. Just… [more](https://www.npmjs.com/package/micromatch) | [homepage](https://github.com/jonschlinkert/micromatch)
 
@@ -79,6 +82,17 @@ Install dev dependencies:
 
 ```sh
 $ npm i -d && npm test
+```
+
+## Coverage
+
+As of October 04, 2015:
+
+```
+Statements : 100% (57/57)
+Branches   : 100% (26/26)
+Functions  : 100% (5/5)
+Lines      : 100% (55/55)
 ```
 
 ## Contributing
@@ -99,4 +113,4 @@ Released under the MIT license.
 
 ***
 
-_This file was generated by [verb-cli](https://github.com/assemble/verb-cli) on September 12, 2015._
+_This file was generated by [verb-cli](https://github.com/assemble/verb-cli) on October 04, 2015._

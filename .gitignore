@@ -10,3 +10,4 @@ tmp
 TODO.md
 vendor
 *.DS_Store
+coverage
