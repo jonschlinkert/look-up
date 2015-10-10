@@ -201,10 +201,12 @@ describe('lookup', function () {
   });
 
   it('should find files in global npm modules:', function () {
-    var actual = lookup('moc*', { cwd: '@/' });
-    assert.isPath(actual);
-    assert.exists(actual);
-    assert.dirname(actual, expand('@'));
+    if (!process.env.TRAVIS) {
+      var actual = lookup('moc*', { cwd: '@/' });
+      assert.isPath(actual);
+      assert.exists(actual);
+      assert.dirname(actual, expand('@'));
+    }
   });
 
   it('should return `null` when no files are found:', function () {
