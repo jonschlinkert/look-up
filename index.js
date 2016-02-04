@@ -68,7 +68,7 @@ function findFile(cwd, filename) {
   }
 
   var segs = cwd.split(path.sep);
-  var len = segs.length - 1;
+  var len = segs.length;
 
   while (len--) {
     cwd = segs.slice(0, len).join('/');
