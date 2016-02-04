@@ -54,6 +54,7 @@ function npm(name) {
 }
 
 describe('lookup', function () {
+
   before(function () {
     fs.writeFileSync(home + '/_aaa.txt', '');
     fs.writeFileSync(home + '/_bbb.txt', '');
@@ -90,6 +91,13 @@ describe('lookup', function () {
     actual = lookup('package.json', {cwd: cwd});
     assert.dirname(actual, cwd);
     assert.basename(actual, 'package.json');
+  });
+
+  it('should support finding file in immediate parent dir', function () {
+    cwd = path.join(__dirname, 'fixtures/a/b/c');
+    var actual = lookup('a.md', { cwd: cwd });
+    assert.dirname(actual, path.dirname(cwd));
+    assert.basename(actual, 'a.md');
   });
 
   it('should support glob patterns', function () {
